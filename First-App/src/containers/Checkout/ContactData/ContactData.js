@@ -4,7 +4,8 @@ import Button from '../../../components/UI/Button/Button';
 import Spinner from '../../../components/UI/Spinner/Spinner';
 import classes from './ContactData.css';
 import axios from '../../../axios-orders';
-import Input from '../../../components/UI/Input/Input'
+import Input from '../../../components/UI/Input/Input';
+import _ from 'lodash';
 
 class ContactData extends Component {
     state = {
@@ -66,9 +67,14 @@ class ContactData extends Component {
     orderHandler = ( event ) => {
         event.preventDefault();
         this.setState( { loading: true } );
+        const orderDetails = {};
+        _.forEach(this.state.customForm, (obj,key) => {
+            orderDetails[key]=obj.value;
+        });
         const order = {
             ingredients: this.props.ingredients,
-            price: this.props.price
+            price: this.props.price,
+            orderData: orderDetails
         }
         axios.post( '/orders.json', order )
             .then( response => {
@@ -80,10 +86,11 @@ class ContactData extends Component {
             } );
     }
 
-    inputChangeHandler = (inputId,event) =>{
+    inputChangeHandler = (event,inputId) =>{
         const formCopy = {...this.state.customForm};
         const inputCopy = {...formCopy[inputId]};
         inputCopy.value = event.target.value;
+        formCopy[inputId]=inputCopy;
         this.setState({
             customForm:formCopy
         });
@@ -95,19 +102,19 @@ class ContactData extends Component {
         for( let key in this.state.customForm){
             formElements.push({
                 id: key,
-                ...this.state.customForm[key]
+                config: this.state.customForm[key]
             });
         }
-        console.log(formElements);
         let form = (
             <form>
                 {
                     formElements.map(element =>(
                         <Input 
-                            inputtype = {element.elementType} 
-                            elementConfig={element.elementConfig} 
+                            inputtype = {element.config.elementType} 
+                            elementConfig={element.config.elementConfig} 
                             key={element.id}
-                            changed={this.inputChangeHandler.bind(this,element.id)}
+                            value={element.config.value}
+                            changed={(event) => this.inputChangeHandler(event,element.id)}
                             />
                     ))
                 }
